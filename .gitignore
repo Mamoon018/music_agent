@@ -1,0 +1,14 @@
+
+
+
+# Environment variables
+.env 
+
+.env.dev
+courses/Global_News_Service.txt
+courses/International_Press.txt
+courses/Loughran-McDonald_MasterDictionary_1993-2025.csv
+courses/practice.ipynb
+courses/tutorial-1.ipynb
+courses/tutorial-2.ipynb
+courses/tutorial-3.ipynb
