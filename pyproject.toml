@@ -5,6 +5,9 @@ description = "It is a chatbot that helps user to stay informed about the news r
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "bcrypt>=5.0.0",
     "pydantic>=2.13.4",
+    "python-dotenv>=1.2.2",
     "structlog>=26.1.0",
+    "supabase>=2.31.0",
 ]

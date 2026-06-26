@@ -23,15 +23,13 @@ before storing into the database, and then open a connection to store credential
     Program that will take user_credentials & process the request:
     (a) We are supposed to write the program for the create account.
     (b) The program is going to be linked with the single endpoint (not creating as of now), such that it will allow user to create the account.
-    (c) The program should accept the user credentials and validate the following conditions.
-        (1) It must search in the database if user name or email already used to create an account. If yes, then it should return error "user_name or email already taken". (to avoid enumeration error we will not leak exact info)
-    (d) If there is no account with credentials, then it should hash-the-password because we will store the hashed-version of the passwords in the database.
-    (e) It should validate the conditions that are defined as requirements to store the datapoints in the database, in the models for database.
-    (f) if any of the requirement of datapoint is not met, then it needs to throw the relevant error.
-    (g) So, the credentials will only be stored in the database if the model for it is satisfied.
-    (h) we need to ensure that unique user_id gets generated everytime we store new user credentials.
-    (i) we need to ensure that program returns the correct and guiding error for the cases where conditions are not met. In case, more than one validation error occurred then we need to ensure
+    (c) The program should validate the user crendetials using the pydantic UserCredentialsModel defined in users.py
+    (d)if any of the requirement of datapoint is not met, then it needs to throw the relevant error.
+    (e) we need to ensure that program returns the correct and guiding error for the cases where conditions are not met, pydantic is already throwing well readable errors. In case, more than one validation error occurred then we need to ensure
     that we return all of those error at once.
+    (f) If the user crendetials are validated by pydantic model then It must search in the database to check if user name or email already used to create an account. If yes, then it should return error "user_name or email already taken". (to avoid enumeration error we will not leak exact info)
+    (g) If there is no account with credentials, then it should hash-the-password because we will store the hashed-version of the passwords in the database.
+    (i) we need to ensure that unique user_id gets generated everytime we store new user credentials.
     (j) On the successful creation of the account, we need to provide clear confirmation for account creation.
 
     This is going to be the process flow: Request → Pydantic Validation → DB Duplicate Check → Hash Password → Store → Return Response
@@ -40,9 +38,7 @@ before storing into the database, and then open a connection to store credential
     (a) We will be using Supabase database for the data storage
     (b) we will be using supabase fetch command to filter on the column email column, user name column to check the duplicate entiries.
     (b) we will use insert command of supabase to insert the user crendetials into the table "users" 
-    (c) we will use "insert a record" command of the supabase database for the insertion of the user credentials in the database.
-
-    
+    (c) we will use "insert a record" command of the supabase database for the insertion of the user credentials in the database.    
 
 
 """
