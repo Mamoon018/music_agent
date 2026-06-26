@@ -4,4 +4,7 @@ version = "0.1.0"
 description = "It is a chatbot that helps user to stay informed about the news regarding Music industry"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pydantic>=2.13.4",
+    "structlog>=26.1.0",
+]

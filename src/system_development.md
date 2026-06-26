@@ -154,6 +154,9 @@ Considering the philosophy of single responsibility principle for the developmen
 **Components of the process:**
 
 1. Create database \& define model for it.
+
+   1. Model needs to be define so, that we can ensure garbage data does not pass the API layer and gets stored in database.
+   2. **Model Definition:** For defining the validation model, we will use Pydantic model for its compatibility with Fastapi, we want to ensure validation lives on API layer side because they include some business logics, we want to apply business logics for which Pydantic is more efficient, it provides low latency, and allows to generate detailed error message. (We did not choose SQLAlchemy, Marshmallow)
 2. Define the Program that can accept the user credentials and invoke the process to store them and return the response for the user
 
    1. Program should include some validation rules for the user credentials
