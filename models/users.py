@@ -4,21 +4,51 @@ user_validation_model.py
 Pydantic model for validating incoming user credentials from the API
 before persisting them to the database.
 """
-
-import logging
+"""
+Pydantic model for validating incoming user credentials from the API
+before persisting them to the database.
+ 
+Logging: structlog with JSONRenderer so every log line is a valid JSON
+object ready for ingestion into a central log platform.
+"""
+ 
 import re
-from pydantic import BaseModel, EmailStr, field_validator, model_validator
+import uuid
+import structlog
+from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional
-
+ 
 # ---------------------------------------------------------------------------
-# Logging configuration
+# Identity constants  (replace with real auth/session source in production)
 # ---------------------------------------------------------------------------
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-    datefmt="%Y-%m-%dT%H:%M:%S",
+USER_ID: int = 111
+SESSION_ID: str = f"112-{uuid.uuid4()}"   # 112 prefix + UUID4 → unique per request
+ 
+# ---------------------------------------------------------------------------
+# structlog configuration
+# ---------------------------------------------------------------------------
+structlog.configure(
+    processors=[
+        structlog.stdlib.add_log_level,           # adds "level" key
+        structlog.processors.TimeStamper(fmt="iso"),  # adds "timestamp" key
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.JSONRenderer(),       # final output: compact JSON line
+    ],
+    wrapper_class=structlog.BoundLogger,
+    context_class=dict,
+    logger_factory=structlog.PrintLoggerFactory(),
 )
-logger = logging.getLogger("user_validator")
+ 
+# Bind shared context once — user_id & session_id flow into every log line
+# automatically without being mentioned again.
+# NOTE: We keep the variable name `logger` (not `log`) because structlog's
+#       BoundLogger exposes a method called `.log()`, so naming the variable
+#       `log` would shadow that method and cause AttributeError at call sites.
+logger = structlog.get_logger().bind(
+    user_id=USER_ID,
+    session_id=SESSION_ID,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +105,7 @@ class UserCredentialsModel(BaseModel):
     @classmethod
     def validate_username(cls, value: str) -> str:
         value = value.strip()
-        logger.info("Validating username …")
+        logger.info("Validating username …", field="username")
 
         if not value:
             raise ValueError("Username must not be empty.")
@@ -92,13 +122,13 @@ class UserCredentialsModel(BaseModel):
                 "letters, digits, or underscores."
             )
 
-        logger.info("✔ Username validation passed.")
+        logger.info("Username validation passed", field="username", status="ok")
         return value
 
     @field_validator("password")
     @classmethod
     def validate_password(cls, value: str) -> str:
-        logger.info("Validating password …")
+        logger.info("Validating password …", field="password")
 
         if not value:
             raise ValueError("Password must not be empty.")
@@ -110,14 +140,14 @@ class UserCredentialsModel(BaseModel):
                 f"(e.g. {_SPECIAL_CHARS[:8]} …)."
             )
 
-        logger.info("✔ Password validation passed.")
+        logger.info("Password validation passed", field="password", status="ok")
         return value  # store as-is; hash it in the service layer before DB insert
 
     @field_validator("email")
     @classmethod
     def validate_email(cls, value: str) -> str:
         value = value.strip().lower()
-        logger.info("Validating email …")
+        logger.info("Validating email …", field="email")
 
         if not value:
             raise ValueError("Email must not be empty.")
@@ -135,7 +165,7 @@ class UserCredentialsModel(BaseModel):
                 "Only letters, digits, dots, underscores, percent, plus, and hyphens are allowed."
             )
 
-        logger.info("✔ Email validation passed.")
+        logger.info("Email validation passed", field="email", status="ok")
         return value
 
     @field_validator("full_name")
@@ -146,7 +176,7 @@ class UserCredentialsModel(BaseModel):
         value = value.strip()
         if len(value) > 100:
             raise ValueError("Full name must not exceed 100 characters.")
-        logger.info("✔ Full-name validation passed.")
+        logger.info("Full-name validation passed", field="full_name", status="ok")
         return value
 
     # ------------------------------------------------------------------
@@ -156,10 +186,10 @@ class UserCredentialsModel(BaseModel):
     @model_validator(mode="after")
     def password_must_not_contain_username(self) -> "UserCredentialsModel":
         """Prevent trivially guessable passwords like 'john1234!'."""
-        logger.info("Running cross-field check: password ≠ username …")
+        logger.info("Running cross-field check", check="password_not_contains_username")
         if self.username.lower() in self.password.lower():
             raise ValueError("Password must not contain the username.")
-        logger.info("✔ Cross-field validation passed.")
+        logger.info("Cross-field validation passed", check="password_not_contains_username", status="ok")
         return self
 
     # ------------------------------------------------------------------
@@ -231,8 +261,16 @@ if __name__ == "__main__":
         print(f"Test: {label}")
         try:
             user = UserCredentialsModel(**payload)
-            logger.info("Model instantiated successfully → %s", user.safe_dict())
+            logger.info(
+                "Model instantiated successfully",
+                result="success",
+                safe_payload=user.safe_dict(),
+            )
         except ValidationError as exc:
-            logger.error("Validation failed:\n%s", exc)
+           logger.error(
+                "Validation failed",
+                result="failure",
+                errors=exc.errors(),
+            )
 
 
