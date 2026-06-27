@@ -1,6 +1,11 @@
 
 
+
+
+
 """
+                                    Technical & Business specifications for Account creation feature for Coding Agent!
+
 Problem: 
 In this problem, we are supposed to define an endpoint that will accept the user credentials for account creation, perform some validation tests 
 before storing into the database, and then open a connection to store credentials in the database.

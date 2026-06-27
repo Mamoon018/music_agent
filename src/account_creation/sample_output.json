@@ -1,0 +1,21 @@
+{
+    "status": "error",
+    "message": "Validation failed. Please fix the errors and try again.",
+    "data": null,
+    "errors": [
+        {
+            "field": "username",
+            "message": "Username must be between 3 and 20 characters (got 2)."
+        },
+        {
+            "field": "password",
+            "message": "Password must be 8\u2013128 characters long, contain at least one letter, one digit, and one special character (e.g. !@#$%^&* \u2026)."
+        },
+        {
+            "field": "email",
+            "message": "Email must be a Gmail address ending with '@gmail.com'."
+        }
+    ]
+}
+
+

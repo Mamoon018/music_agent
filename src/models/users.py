@@ -13,42 +13,9 @@ object ready for ingestion into a central log platform.
 """
  
 import re
-import uuid
-import structlog
 from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional
- 
-# ---------------------------------------------------------------------------
-# Identity constants  (replace with real auth/session source in production)
-# ---------------------------------------------------------------------------
-USER_ID: int = 111
-SESSION_ID: str = f"112-{uuid.uuid4()}"   # 112 prefix + UUID4 → unique per request
- 
-# ---------------------------------------------------------------------------
-# structlog configuration
-# ---------------------------------------------------------------------------
-structlog.configure(
-    processors=[
-        structlog.stdlib.add_log_level,           # adds "level" key
-        structlog.processors.TimeStamper(fmt="iso"),  # adds "timestamp" key
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.format_exc_info,
-        structlog.processors.JSONRenderer(),       # final output: compact JSON line
-    ],
-    wrapper_class=structlog.BoundLogger,
-    context_class=dict,
-    logger_factory=structlog.PrintLoggerFactory(),
-)
- 
-# Bind shared context once — user_id & session_id flow into every log line
-# automatically without being mentioned again.
-# NOTE: We keep the variable name `logger` (not `log`) because structlog's
-#       BoundLogger exposes a method called `.log()`, so naming the variable
-#       `log` would shadow that method and cause AttributeError at call sites.
-logger = structlog.get_logger().bind(
-    user_id=USER_ID,
-    session_id=SESSION_ID,
-)
+from src.utils import logger
 
 
 # ---------------------------------------------------------------------------
